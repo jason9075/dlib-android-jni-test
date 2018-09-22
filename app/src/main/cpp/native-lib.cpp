@@ -12,10 +12,15 @@
 ((void)__android_log_print(ANDROID_LOG_INFO, "dlib-jni:", __VA_ARGS__))
 
 #define JNI_METHOD(NAME) \
-Java_com_jason9075_importdlibdemo_MainActivity_##NAME
+Java_com_jason9075_importdlibdemo_DLibLandmarks68Detector_##NAME
 
 using namespace ::com::my::jni::dlib::data;
 
+void throwException(JNIEnv* env,
+                    const char* message) {
+    jclass Exception = env->FindClass("java/lang/RuntimeException");
+    env->ThrowNew(Exception, message);
+}
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_jason9075_importdlibdemo_MainActivity_stringFromJNI(
@@ -23,12 +28,6 @@ Java_com_jason9075_importdlibdemo_MainActivity_stringFromJNI(
         jobject /* this */) {
     std::string hello = "Hello from C++";
     return env->NewStringUTF(hello.c_str());
-}
-
-void throwException(JNIEnv* env,
-                    const char* message) {
-    jclass Exception = env->FindClass("java/lang/RuntimeException");
-    env->ThrowNew(Exception, message);
 }
 
 // FIXME: Create a class inheriting from dlib::array2d<dlib::rgb_pixel>.
@@ -144,4 +143,59 @@ JNI_METHOD(detectFacesAndLandmarks)(JNIEnv *env,
 
 
     return out;
+}
+
+
+// JNI ////////////////////////////////////////////////////////////////////////
+
+extern "C" JNIEXPORT jboolean JNICALL
+JNI_METHOD(isFaceDetectorReady)(JNIEnv* env,
+                                jobject thiz) {
+    if (sFaceDetector.num_detectors() > 0) {
+        return JNI_TRUE;
+    } else {
+        return JNI_FALSE;
+    }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+JNI_METHOD(isFaceLandmarksDetectorReady)(JNIEnv* env,
+                                         jobject thiz) {
+    if (sFaceLandmarksDetector.num_parts() > 0) {
+        return JNI_TRUE;
+    } else {
+        return JNI_FALSE;
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+JNI_METHOD(prepareFaceDetector)(JNIEnv *env,
+                                jobject thiz) {
+
+    // Prepare the detector.
+    sFaceDetector = dlib::get_frontal_face_detector();
+
+    LOGI("L%d: sFaceDetector.num_detectors()=%lu", __LINE__, sFaceDetector.num_detectors());
+}
+
+extern "C" JNIEXPORT void JNICALL
+JNI_METHOD(prepareFaceLandmarksDetector)(JNIEnv *env,
+                                         jobject thiz,
+                                         jstring detectorPath) {
+    const char *path = env->GetStringUTFChars(detectorPath, JNI_FALSE);
+
+    // We need a shape_predictor. This is the tool that will predict face
+    // landmark positions given an image and face bounding box.  Here we are just
+    // loading the model from the shape_predictor_68_face_landmarks.dat file you gave
+    // as a command line argument.
+    // Deserialize the shape detector.
+    dlib::deserialize(path) >> sFaceLandmarksDetector;
+
+    LOGI("L%d: sFaceLandmarksDetector.num_parts()=%lu", __LINE__, sFaceLandmarksDetector.num_parts());
+
+    env->ReleaseStringUTFChars(detectorPath, path);
+
+    if (sFaceLandmarksDetector.num_parts() != 68) {
+        throwException(env, "It's not a 68 landmarks detector!");
+    }
 }
