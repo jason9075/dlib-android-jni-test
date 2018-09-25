@@ -199,3 +199,67 @@ JNI_METHOD(prepareFaceLandmarksDetector)(JNIEnv *env,
         throwException(env, "It's not a 68 landmarks detector!");
     }
 }
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+JNI_METHOD(detectLandmarksFromFaces)(JNIEnv *env,
+                                     jobject thiz,
+                                     jobject bitmap,
+                                     jbyteArray faceRects) {
+
+    // Convert bitmap to dlib::array2d.
+    dlib::array2d<dlib::rgb_pixel> img;
+    convertBitmapToArray2d(env, bitmap, img);
+
+    const long width = img.nc();
+    const long height = img.nr();
+
+    // Translate the input face-rects message into something we recognize here.
+    jbyte* pFaceRects = env->GetByteArrayElements(faceRects, NULL);
+    jsize pFaceRectsLen = env->GetArrayLength(faceRects);
+    RectFList msgBounds;
+    msgBounds.ParseFromArray(pFaceRects, pFaceRectsLen);
+    env->ReleaseByteArrayElements(faceRects, pFaceRects, 0);
+    std::vector<dlib::rectangle> bounds;
+    for (int i = 0; i < msgBounds.rects().size(); ++i) {
+        const RectF& msgBound = msgBounds.rects().Get(i);
+        bounds.push_back(dlib::rectangle((long) msgBound.left(),
+                                         (long) msgBound.top(),
+                                         (long) msgBound.right(),
+                                         (long) msgBound.bottom()));
+    }
+
+    // Detect landmarks and return protobuf message.
+    FaceList faces;
+    for (unsigned long j = 0; j < bounds.size(); ++j) {
+        dlib::full_object_detection shape = sFaceLandmarksDetector(img, bounds[j]);
+
+        // To protobuf message.
+        Face* face = faces.add_faces();
+        // Transfer face boundary.
+        RectF* bound = face->mutable_bound();
+        bound->set_left((float) bounds[j].left() / width);
+        bound->set_top((float) bounds[j].top() / height);
+        bound->set_right((float) bounds[j].right() / width);
+        bound->set_bottom((float) bounds[j].bottom() / height);
+        // Transfer face landmarks.
+        for (u_long i = 0 ; i < shape.num_parts(); ++i) {
+            dlib::point& pt = shape.part(i);
+
+            Landmark* landmark = face->add_landmarks();
+            landmark->set_x((float) pt.x() / width);
+            landmark->set_y((float) pt.y() / height);
+        }
+    }
+
+    // Prepare the return message.
+    int outSize = faces.ByteSize();
+    jbyteArray out = env->NewByteArray(outSize);
+    jbyte* buffer = new jbyte[outSize];
+
+    faces.SerializeToArray(buffer, outSize);
+    env->SetByteArrayRegion(out, 0, outSize, buffer);
+    delete[] buffer;
+
+    return out;
+}
+

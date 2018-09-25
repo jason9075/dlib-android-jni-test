@@ -61,4 +61,8 @@ public interface IDLibFaceDetector {
      */
     List<DLibFace> findFacesAndLandmarks(Bitmap bitmap)
         throws InvalidProtocolBufferException;
+
+    List<DLibFace> findLandmarksFromFaces(Bitmap bitmap,
+                                          List<Rect> faceBounds)
+            throws InvalidProtocolBufferException;
 }
