@@ -13,7 +13,6 @@ import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.jason9075.importdlibdemo.IDLibFaceDetector;
 import com.jason9075.importdlibdemo.view.FaceLandmarksOverlayView;
 import com.my.jni.dlib.data.DLibFace;
 

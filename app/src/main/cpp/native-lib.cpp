@@ -12,7 +12,7 @@
 ((void)__android_log_print(ANDROID_LOG_INFO, "dlib-jni:", __VA_ARGS__))
 
 #define JNI_METHOD(NAME) \
-Java_com_jason9075_importdlibdemo_DLibLandmarks68Detector_##NAME
+Java_com_jason9075_importdlibdemo_detector_DLibLandmarks68Detector_##NAME
 
 using namespace ::com::my::jni::dlib::data;
 
@@ -23,7 +23,7 @@ void throwException(JNIEnv* env,
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_jason9075_importdlibdemo_MainActivity_stringFromJNI(
+Java_com_jason9075_importdlibdemo_PhotoDetectActivity_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
     std::string hello = "Hello from C++";
