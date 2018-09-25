@@ -1,9 +1,15 @@
 package com.jason9075.importdlibdemo;
 
+import android.content.Intent;
 import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public static final String MODEL_DATA = "shape_predictor_68_face_landmarks.dat";
     public static final int TARGET_WIDTH = 300;
+    final int ACTIVITY_SELECT_IMAGE = 1234;
 
     private Detector<DLibFace> mDetector;
 
@@ -40,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ImageView imageView;
     private FaceLandmarksOverlayView mOverlayView;
+    private IDLibFaceDetector mLandmarksDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,38 +62,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         imageView.setImageResource(R.drawable.photo);
         mOverlayView = findViewById(R.id.overlay);
         Button detectButton = findViewById(R.id.detect_button);
+        FloatingActionButton album = findViewById(R.id.album_button);
         detectButton.setOnClickListener(this);
+        album.setOnClickListener(this);
         tv.setText(stringFromJNI());
 
-        System.out.println(">>>>init detector");
         // Init the face detector.
-        IDLibFaceDetector landmarksDetector = new DLibLandmarks68Detector();
+        mLandmarksDetector = new DLibLandmarks68Detector();
 
         /* Too Slow ! */
 //        if (!landmarksDetector.isFaceDetectorReady()) {
 //            landmarksDetector.prepareFaceDetector();
 //        }
-        if (!landmarksDetector.isFaceLandmarksDetectorReady()) {
-            landmarksDetector.prepareFaceLandmarksDetector(
+        if (!mLandmarksDetector.isFaceLandmarksDetectorReady()) {
+            mLandmarksDetector.prepareFaceLandmarksDetector(
                     path);
         }
-
-        Detector<Face> faceDetector = new FaceDetector.Builder(this)
-                .setClassificationType(FaceDetector.FAST_MODE)
-                .setLandmarkType(FaceDetector.NO_LANDMARKS)
-                .build();
-
-        mDetector = new GoogleVisionAndDlibLandmarkDetector(faceDetector,
-                                                            landmarksDetector,
-                mOverlayView);
-        System.out.println(">>>>finish init detector");
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Detector<Face> faceDetector = new FaceDetector.Builder(this)
+                .setClassificationType(FaceDetector.FAST_MODE)
+                .setLandmarkType(FaceDetector.NO_LANDMARKS)
+                .build();
 
+        mDetector = new GoogleVisionAndDlibLandmarkDetector(faceDetector,
+                mLandmarksDetector,
+                mOverlayView);
     }
 
     private void startDetect() {
@@ -95,10 +101,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Matrix matrix = new Matrix();
         float scale = TARGET_WIDTH / (float)bitmap.getWidth();
         matrix.postScale(scale, scale);
-        Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+        Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
         Frame frame = new Frame.Builder().setBitmap(resizedBitmap).build();
 
         mOverlayView.setCameraPreviewSize(resizedBitmap.getWidth(), resizedBitmap.getHeight());
+        mOverlayView.setVisibility(View.VISIBLE);
         mDetector.receiveFrame(frame);
 
         System.out.println(">>>>>>> finish detect face result:");
@@ -126,8 +133,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 copyFile(in, out);
             } catch(IOException e) {
                 Log.e("tag", "Failed to copy asset file: " + filename, e);
-            }
-            finally {
+            } finally {
                 if (in != null) {
                     try {
                         in.close();
@@ -163,6 +169,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.detect_button:
                 startDetect();
+                break;
+            case R.id.album_button:
+                Intent i = new Intent(Intent.ACTION_PICK,
+                        android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                startActivityForResult(i, ACTIVITY_SELECT_IMAGE);
+                break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch(requestCode) {
+            case ACTIVITY_SELECT_IMAGE:
+                if(resultCode == RESULT_OK){
+                    Uri selectedImage = data.getData();
+                    if(selectedImage==null)
+                        return;
+                    try {
+                        Bitmap currentImage = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+                        imageView.setImageBitmap(currentImage);
+                        mOverlayView.setVisibility(View.INVISIBLE);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
         }
     }
 }
