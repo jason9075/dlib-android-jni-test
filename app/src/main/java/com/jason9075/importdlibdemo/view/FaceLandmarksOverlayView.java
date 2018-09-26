@@ -104,7 +104,7 @@ public FaceLandmarksOverlayView(Context context,
 
             // Render boundary.
             canvas.drawRect(face.getBound(), mStrokePaint);
-
+            System.out.println(">>>>>>>>>bound:"+face.getBound());
             // Render face's landmarks.
             for (int j = 0; j < face.getAllLandmarks().size(); ++j) {
                 // Render chin.

@@ -27,12 +27,15 @@ public class GoogleVisionAndDlibLandmarkDetector extends Detector<DLibFace> {
 
     private final Detector<Face> mFaceDetector;
     private final IDLibFaceDetector mLandmarksDetector;
+    private boolean mIsFrontCamera;
 
     public GoogleVisionAndDlibLandmarkDetector(final Detector<Face> faceDetector,
                                               final IDLibFaceDetector landmarksDetector,
-                                              final FaceLandmarksOverlayView overlay) {
+                                              final FaceLandmarksOverlayView overlay,
+                                              final boolean isFront) {
         mFaceDetector = faceDetector;
         mLandmarksDetector = landmarksDetector;
+        mIsFrontCamera = isFront;
 
         setProcessor(new PostProcessor(overlay));
     }
@@ -62,7 +65,30 @@ public class GoogleVisionAndDlibLandmarkDetector extends Detector<DLibFace> {
         for (int i = 0; i < faces.size(); ++i) {
             final Face face = faces.get(faces.keyAt(i));
 
-            final float x = face.getPosition().x;
+            // The facing-front preview is horizontally mirrored and it's
+            // no harm for the algorithm to find the face bound, but it's
+            // critical for the algorithm to align the landmarks. I need
+            // to mirror it again.
+            // 前鏡頭時 x座標系統是從右到左 Ex：自拍時 照片的文字順序會相反
+            // For example:
+            //
+            // <-------------+ (1) The mirrored coordinate.
+            // +-------------> (2) The not-mirrored coordinate.
+            // |       |-----| This is x in the (1) system.
+            // |   |---|       This is w in both (1) and (2) systems.
+            // |   ?           This is what I want in the (2) system.
+            // |   .---.
+            // |   | F |
+            // |   '---'
+            // |
+            // v
+
+            final float x;
+            if(mIsFrontCamera) {
+                x = frame.getMetadata().getHeight() - face.getPosition().x - face.getWidth();
+            } else {
+                x = face.getPosition().x;
+            }
             final float y = face.getPosition().y;
             final float w = face.getWidth();
             final float h = face.getHeight();
@@ -117,6 +143,10 @@ public class GoogleVisionAndDlibLandmarkDetector extends Detector<DLibFace> {
             case Frame.ROTATION_270:
                 transform.postRotate(270);
                 break;
+        }
+
+        if (mIsFrontCamera) {
+            transform.postScale(-1, 1);
         }
 
         return transform;

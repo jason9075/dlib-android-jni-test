@@ -20,6 +20,9 @@ public class MainActivity extends AppCompatActivity {
                                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP));
                     break;
                 case 1:
+                    startActivity(
+                        new Intent(MainActivity.this,CameraDetectActivity.class)
+                                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP));
                     break;
             }
         }

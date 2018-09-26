@@ -24,6 +24,7 @@ import com.jason9075.importdlibdemo.R;
 import com.jason9075.importdlibdemo.detector.DLibLandmarks68Detector;
 import com.jason9075.importdlibdemo.detector.GoogleVisionAndDlibLandmarkDetector;
 import com.jason9075.importdlibdemo.detector.IDLibFaceDetector;
+import com.jason9075.importdlibdemo.utils.Utils;
 import com.jason9075.importdlibdemo.view.FaceLandmarksOverlayView;
 import com.my.jni.dlib.data.DLibFace;
 
@@ -35,9 +36,8 @@ import java.io.OutputStream;
 
 public class PhotoDetectActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final String MODEL_DATA = "shape_predictor_68_face_landmarks.dat";
-    public static final int TARGET_WIDTH = 300;
-    final int ACTIVITY_SELECT_IMAGE = 1234;
+    private static final int TARGET_WIDTH = 300;
+    private final int ACTIVITY_SELECT_IMAGE = 1234;
 
     private Detector<DLibFace> mDetector;
 
@@ -54,7 +54,7 @@ public class PhotoDetectActivity extends AppCompatActivity implements View.OnCli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_detect);
 
-        String path = copyAssets();
+        String path = Utils.copyAssets(this);
 
         // Example of a call to a native method
         TextView tv = (TextView) findViewById(R.id.sample_text);
@@ -91,7 +91,8 @@ public class PhotoDetectActivity extends AppCompatActivity implements View.OnCli
 
         mDetector = new GoogleVisionAndDlibLandmarkDetector(faceDetector,
                 mLandmarksDetector,
-                mOverlayView);
+                mOverlayView,
+                false);
     }
 
     private void startDetect() {
@@ -111,56 +112,6 @@ public class PhotoDetectActivity extends AppCompatActivity implements View.OnCli
         System.out.println(">>>>>>> finish detect face result:");
     }
 
-    private String copyAssets() {
-        File detectorData = new File(getExternalFilesDir(null), MODEL_DATA);
-        if(detectorData.exists())
-            return detectorData.getAbsolutePath();
-
-        AssetManager assetManager = getAssets();
-        String[] files = null;
-        try {
-            files = assetManager.list("");
-        } catch (IOException e) {
-            Log.e("tag", "Failed to get asset file list.", e);
-        }
-        if (files != null) for (String filename : files) {
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = assetManager.open(filename);
-                File outFile = new File(getExternalFilesDir(null), filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-            } catch(IOException e) {
-                Log.e("tag", "Failed to copy asset file: " + filename, e);
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        // NOOP
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        // NOOP
-                    }
-                }
-            }
-        }
-        detectorData = new File(getExternalFilesDir(null), MODEL_DATA);
-        return detectorData.getAbsolutePath();
-    }
-
-    private void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[1024];
-        int read;
-        while((read = in.read(buffer)) != -1){
-            out.write(buffer, 0, read);
-        }
-    }
 
     public native String stringFromJNI();
 
