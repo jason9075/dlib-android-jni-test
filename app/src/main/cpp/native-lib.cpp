@@ -12,7 +12,10 @@
 ((void)__android_log_print(ANDROID_LOG_INFO, "dlib-jni:", __VA_ARGS__))
 
 #define JNI_METHOD(NAME) \
-Java_com_jason9075_importdlibdemo_detector_DLibLandmarks68Detector_##NAME
+Java_com_jason9075_importdlibdemo_detector_single_DLibLandmarks68Detector_##NAME
+
+#define JNI_TOY_METHOD(NAME) \
+        Java_com_jason9075_importdlibdemo_detector_single_LegoToyDetector_##NAME
 
 using namespace ::com::my::jni::dlib::data;
 
@@ -21,6 +24,12 @@ void throwException(JNIEnv* env,
     jclass Exception = env->FindClass("java/lang/RuntimeException");
     env->ThrowNew(Exception, message);
 }
+
+typedef dlib::scan_fhog_pyramid<dlib::pyramid_down<6> > image_scanner_type;
+
+dlib::shape_predictor sFaceLandmarksDetector;
+dlib::frontal_face_detector sFaceDetector;
+dlib::object_detector<image_scanner_type> sToyDetector;
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_jason9075_importdlibdemo_PhotoDetectActivity_stringFromJNI(
@@ -74,9 +83,6 @@ void convertBitmapToArray2d(JNIEnv* env,
     AndroidBitmap_unlockPixels(env, bitmap);
 }
 
-
-dlib::shape_predictor sFaceLandmarksDetector;
-dlib::frontal_face_detector sFaceDetector;
 
 extern "C" JNIEXPORT jbyteArray JNICALL
 JNI_METHOD(detectFacesAndLandmarks)(JNIEnv *env,
@@ -262,4 +268,61 @@ JNI_METHOD(detectLandmarksFromFaces)(JNIEnv *env,
 
     return out;
 }
+
+extern "C" JNIEXPORT void JNICALL
+JNI_TOY_METHOD(prepareLegoToyDetector)(JNIEnv *env,
+                                         jobject thiz,
+                                         jstring detectorPath) {
+    const char *path = env->GetStringUTFChars(detectorPath, JNI_FALSE);
+
+    dlib::deserialize(path) >> sToyDetector;
+
+    LOGI("L%d: sToyDetector Ready", __LINE__);
+
+    env->ReleaseStringUTFChars(detectorPath, path);
+
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+JNI_TOY_METHOD(detectLegoToy)(JNIEnv *env,
+                                     jobject thiz,
+                                     jobject bitmap) {
+
+    // Convert bitmap to dlib::array2d.
+    dlib::array2d<dlib::rgb_pixel> img;
+    convertBitmapToArray2d(env, bitmap, img);
+
+    const long width = img.nc();
+    const long height = img.nr();
+
+    std::vector<dlib::rectangle> dets = sToyDetector(img);
+
+    // Protobuf message.
+    FaceList faces;
+    // Now we will go ask the shape_predictor to tell us the pose of
+    // each face we detected.
+    for (unsigned long j = 0; j < dets.size(); ++j) {
+
+        // To protobuf message.
+        Face* face = faces.add_faces();
+        // Transfer face boundary.
+        RectF* bound = face->mutable_bound();
+        bound->set_left((float) dets[j].left() / width);
+        bound->set_top((float) dets[j].top() / height);
+        bound->set_right((float) dets[j].right() / width);
+        bound->set_bottom((float) dets[j].bottom() / height);
+    }
+
+    // Prepare the return message.
+    int outSize = faces.ByteSize();
+    jbyteArray out = env->NewByteArray(outSize);
+    jbyte* buffer = new jbyte[outSize];
+
+    faces.SerializeToArray(buffer, outSize);
+    env->SetByteArrayRegion(out, 0, outSize, buffer);
+    delete[] buffer;
+
+    return out;
+}
+
 

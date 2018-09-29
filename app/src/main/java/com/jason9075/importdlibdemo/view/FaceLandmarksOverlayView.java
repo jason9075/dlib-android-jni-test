@@ -103,8 +103,8 @@ public FaceLandmarksOverlayView(Context context,
         for (int i = 0; i < mFaces.size(); ++i) {
             final DLibFace face = mFaces.get(i);
 
-//            // Render boundary.
-//            canvas.drawRect(face.getBound(), mStrokePaint);
+            // Render boundary.
+            canvas.drawRect(face.getBound(), mStrokePaint);
 
             // Render face's landmarks.
             List<DLibFace.Landmark> allMarks = face.getAllLandmarks();

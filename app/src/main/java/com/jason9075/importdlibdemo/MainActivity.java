@@ -24,6 +24,11 @@ public class MainActivity extends AppCompatActivity {
                         new Intent(MainActivity.this,CameraDetectActivity.class)
                                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP));
                     break;
+                case 2:
+                    startActivity(
+                            new Intent(MainActivity.this,LegoToyDetectorActivity.class)
+                                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP));
+                    break;
             }
         }
     };
@@ -35,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
         ListView listView = findViewById(R.id.listview);
 
-        String[] items = {"Photo Detect", "Camera Detect"};
+        String[] items = {"Photo Detect", "Camera Detect", "Lego Toy Detect"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1,
                 items);

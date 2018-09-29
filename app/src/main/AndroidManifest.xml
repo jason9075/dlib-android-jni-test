@@ -23,6 +23,9 @@
         <activity
             android:name=".CameraDetectActivity">
         </activity>
+        <activity
+            android:name=".LegoToyDetectorActivity">
+        </activity>
     </application>
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

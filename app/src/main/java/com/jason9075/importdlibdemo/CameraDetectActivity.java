@@ -1,12 +1,9 @@
 package com.jason9075.importdlibdemo;
 
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.Manifest;
 import android.view.View;
@@ -16,9 +13,9 @@ import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
-import com.jason9075.importdlibdemo.detector.DLibLandmarks68Detector;
+import com.jason9075.importdlibdemo.detector.single.DLibLandmarks68Detector;
 import com.jason9075.importdlibdemo.detector.GoogleVisionAndDlibLandmarkDetector;
-import com.jason9075.importdlibdemo.detector.IDLibFaceDetector;
+import com.jason9075.importdlibdemo.detector.single.IDLibFaceDetector;
 import com.jason9075.importdlibdemo.utils.Utils;
 import com.jason9075.importdlibdemo.view.CameraSourcePreview;
 import com.jason9075.importdlibdemo.view.FaceLandmarksOverlayView;
@@ -46,7 +43,8 @@ public class CameraDetectActivity extends AppCompatActivity implements View.OnCl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_detect);
 
-        String path = Utils.copyAssets(this);
+        Utils.copyAssets(this);
+        String path = Utils.getCopyedAssets(this, Utils.MODEL_DATA);
 
         mCameraView = findViewById(R.id.camera);
         mOverlayView = findViewById(R.id.overlay);

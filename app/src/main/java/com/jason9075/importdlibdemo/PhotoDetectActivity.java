@@ -1,7 +1,6 @@
 package com.jason9075.importdlibdemo;
 
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
@@ -10,7 +9,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -20,19 +18,14 @@ import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
-import com.jason9075.importdlibdemo.R;
-import com.jason9075.importdlibdemo.detector.DLibLandmarks68Detector;
+import com.jason9075.importdlibdemo.detector.single.DLibLandmarks68Detector;
 import com.jason9075.importdlibdemo.detector.GoogleVisionAndDlibLandmarkDetector;
-import com.jason9075.importdlibdemo.detector.IDLibFaceDetector;
+import com.jason9075.importdlibdemo.detector.single.IDLibFaceDetector;
 import com.jason9075.importdlibdemo.utils.Utils;
 import com.jason9075.importdlibdemo.view.FaceLandmarksOverlayView;
 import com.my.jni.dlib.data.DLibFace;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 public class PhotoDetectActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -54,7 +47,9 @@ public class PhotoDetectActivity extends AppCompatActivity implements View.OnCli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_detect);
 
-        String path = Utils.copyAssets(this);
+        Utils.copyAssets(this);
+        String path = Utils.getCopyedAssets(this, Utils.MODEL_DATA);
+
 
         // Example of a call to a native method
         TextView tv = (TextView) findViewById(R.id.sample_text);

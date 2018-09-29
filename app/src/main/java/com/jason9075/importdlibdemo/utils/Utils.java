@@ -13,13 +13,16 @@ import java.io.OutputStream;
 
 public class Utils {
 
-    private static final String MODEL_DATA = "shape_predictor_68_face_landmarks.dat";
+    public static final String MODEL_DATA = "shape_predictor_68_face_landmarks.dat";
+    public static final String TOY_MODEL_DATA = "detector.svm";
 
 
-    public static String copyAssets(Context context) {
-        File detectorData = new File(context.getExternalFilesDir(null), MODEL_DATA);
-        if(detectorData.exists())
-            return detectorData.getAbsolutePath();
+    public static void copyAssets(Context context) {
+        File model = new File(context.getExternalFilesDir(null), MODEL_DATA);
+        File toyModel = new File(context.getExternalFilesDir(null), TOY_MODEL_DATA);
+
+        if(model.exists() && toyModel.exists())
+            return;
 
         AssetManager assetManager = context.getAssets();
         String[] files = null;
@@ -55,7 +58,10 @@ public class Utils {
                 }
             }
         }
-        detectorData = new File(context.getExternalFilesDir(null), MODEL_DATA);
+    }
+
+    public static String getCopyedAssets(Context context, String name) {
+        File detectorData = new File(context.getExternalFilesDir(null), name);
         return detectorData.getAbsolutePath();
     }
 
